@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トークテーマ ランダムガチャ</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #fff176;
+            --card-border: #fbc02d;
+            --text-color: #333333;
+            --accent-color: #ff9800;
+            --button-bg: #4caf50;
+            --button-hover: #43a047;
+            --shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #444;
+        }
+
+        .card-perspective {
+            perspective: 1000px;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 340px;
+            height: 240px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            background-color: var(--card-bg);
+            border: 4px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            box-sizing: border-box;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            user-select: none;
+        }
+
+        .card::before {
+            content: "\002F\002F\002F";
+            font-weight: bold;
+            color: #d7ccc8;
+            font-size: 1.2rem;
+            position: absolute;
+            top: 15px;
+            letter-spacing: 2px;
+        }
+
+        .card::after {
+            content: "★";
+            color: #f57f17;
+            font-size: 1.2rem;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+        }
+
+        .card-text {
+            font-size: 1.6rem;
+            font-weight: bold;
+            line-height: 1.4;
+            color: #212121;
+            word-break: break-word;
+        }
+
+        .card.shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.03) rotate(-3deg); }
+            50% { transform: scale(1.05) rotate(3deg); }
+            75% { transform: scale(1.03) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: #29b6f6;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        button:hover {
+            background-color: #0288d1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .history {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #666;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 340px;
+            box-sizing: border-box;
+        }
+
+        .history h2 {
+            font-size: 1rem;
+            margin: 0 0 10px 0;
+            color: #888;
+        }
+
+        .history ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 120px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .history li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .history li:first-child {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>トークテーマガチャ</h1>
+
+        <div class="card-perspective">
+            <div class="card" id="themeCard">
+                <div class="card-text" id="themeText">ボタンを押してね！</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="drawTheme()">テーマを引く！</button>
+        </div>
+
+        <div class="history">
+            <h2>出たテーマの履歴</h2>
+            <ul id="historyList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const themes = [
+            "最近うれしかったこと", "特技", "必殺技がひとつだけ使えるとしたら何？", "好きなキャラクター",
+            "体験してみたい仕事", "好きな年間行事・イベント", "好きな野菜・くだもの", "買わなきゃよかったもの",
+            "最近見た映画・ドラマ", "好きな味噌汁の具", "好きなチェーン店", "今日で世界が終わるとしたら何する？",
+            "ハマって集めたもの", "好きな飲み物", "何をしているときが幸せ？", "2週間休みがあったら何する？",
+            "好きな人のタイプ", "今いちばん食べたいもの", "最近欲しいもの", "おすすめのアプリ・ゲーム",
+            "好きなお菓子", "好きなアイス", "無人島にひとつだけ持っていくとしたら何？", "最近聴いている音楽",
+            "最近したよい行い", "好きな麺料理", "モーニングルーティン", "最近おいしかったもの",
+            "1万円あったら何に使う？", "100万円あったら何に使う？", "人生で一度はやってみたいこと", "お気に入りの場所",
+            "好きなスポーツ・運動", "好きな寿司ネタ", "なってみたい生き物", "好きな動物",
+            "最近買ってみてよかったもの", "未来の技術で欲しいもの", "飼っているペット・飼ってみたいペット", "好きな色",
+            "最近おもしろかったこと", "ストレス解消法", "好きな言葉・セリフ", "ついやってしまうこと",
+            "おすすめのアイテム", "会ってみたい人", "最近遊びに行ったところ", "自分の好きなところ",
+            "好きなパン", "好きな具のおにぎり", "最近悩んでいること", "行きたい国・場所",
+            "気をつけていること", "透明人間になったらしたいこと", "最近ハマっていること", "最近変えたこと",
+            "これから始めたいこと", "コンビニでつい買ってしまうもの", "できればやりたくないこと", "すごいなぁと思う人",
+            "最近気になっている芸能人", "最近おどろいたこと", "好きなチーム・グループ", "星座",
+            "最近知ったこと", "出身地", "タイムマシンで行ってみたいところ", "最近気になっているニュース",
+            "最近読んだ本・マンガ", "最近始めたこと", "人生最後に食べたいもの", "自分の名前を変えるなら何？",
+            "自分を動物にたとえるなら何？", "昨日食べたもの", "最近見ている番組・動画"
+        ];
+
+        const themeCard = document.getElementById('themeCard');
+        const themeText = document.getElementById('themeText');
+        const historyList = document.getElementById('historyList');
+
+        function drawTheme() {
+            themeCard.classList.remove('shake');
+            void themeCard.offsetWidth; // Trigger reflow for animation restart
+
+            const randomIndex = Math.floor(Math.random() * themes.length);
+            const selectedTheme = themes[randomIndex];
+
+            themeText.innerText = selectedTheme;
+            themeCard.classList.add('shake');
+
+            // Add to history
+            const li = document.createElement('li');
+            li.textContent = selectedTheme;
+            historyList.insertBefore(li, historyList.firstChild);
+
+            // Limit history to last 10
+            if (historyList.children.length > 10) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>
